@@ -114,7 +114,7 @@ export default function RegisterPage() {
                 name="full_name"
                 id="full_name"
                 autoComplete="name"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                className="mt-1 block w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
               />
               {fieldErrors.full_name && (
                 <p className="mt-1 text-sm text-red-600">{fieldErrors.full_name}</p>
@@ -130,7 +130,7 @@ export default function RegisterPage() {
                 name="dealership_name"
                 id="dealership_name"
                 autoComplete="organization"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                className="mt-1 block w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
               />
               {fieldErrors.dealership_name && (
                 <p className="mt-1 text-sm text-red-600">{fieldErrors.dealership_name}</p>
@@ -146,7 +146,7 @@ export default function RegisterPage() {
                 name="email"
                 id="email"
                 autoComplete="email"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                className="mt-1 block w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
               />
               {fieldErrors.email && (
                 <p className="mt-1 text-sm text-red-600">{fieldErrors.email}</p>
@@ -162,7 +162,7 @@ export default function RegisterPage() {
                 name="phone"
                 id="phone"
                 autoComplete="tel"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                className="mt-1 block w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
               />
               {fieldErrors.phone && (
                 <p className="mt-1 text-sm text-red-600">{fieldErrors.phone}</p>
@@ -179,7 +179,7 @@ export default function RegisterPage() {
                   name="city"
                   id="city"
                   autoComplete="address-level2"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                  className="mt-1 block w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
                 />
                 {fieldErrors.city && (
                   <p className="mt-1 text-sm text-red-600">{fieldErrors.city}</p>
@@ -194,7 +194,7 @@ export default function RegisterPage() {
                   name="state"
                   id="state"
                   autoComplete="address-level1"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                  className="mt-1 block w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
                   defaultValue=""
                 >
                   <option value="" disabled>
@@ -219,7 +219,7 @@ export default function RegisterPage() {
               <select
                 name="dealer_type"
                 id="dealer_type"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                className="mt-1 block w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
                 defaultValue=""
               >
                 <option value="" disabled>
