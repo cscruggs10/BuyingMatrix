@@ -24,7 +24,7 @@ export async function createSessionToken(payload: Omit<SessionPayload, "exp">): 
 export async function verifySessionToken(token: string): Promise<SessionPayload | null> {
   try {
     const { payload } = await jwtVerify(token, SECRET_KEY);
-    return payload as SessionPayload;
+    return payload as unknown as SessionPayload;
   } catch {
     return null;
   }
