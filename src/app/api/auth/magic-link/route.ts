@@ -39,8 +39,13 @@ export async function POST(request: NextRequest) {
     });
 
     // Build magic link URL
-    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const railwayDomain = process.env.RAILWAY_PUBLIC_DOMAIN;
+    const baseUrl = railwayDomain
+      ? `https://${railwayDomain}`
+      : (process.env.NEXTAUTH_URL || "http://localhost:3000");
     const magicLink = `${baseUrl}/api/auth/verify?token=${token}`;
+
+    console.log("Magic link generated:", magicLink);
 
     // Send email via Resend
     const fromEmail = process.env.FROM_EMAIL || "onboarding@resend.dev";
