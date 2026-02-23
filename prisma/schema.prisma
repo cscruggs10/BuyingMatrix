@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DealerType {
+  INDEPENDENT
+  FRANCHISE
+  WHOLESALE
+  BHPH
+}
+
+model Dealer {
+  id                String           @id @default(uuid())
+  full_name         String
+  dealership_name   String
+  email             String           @unique
+  phone             String
+  city              String
+  state             String
+  dealer_type       DealerType
+  created_at        DateTime         @default(now())
+  entries           BuyBoxEntry[]
+  magic_link_tokens MagicLinkToken[]
+}
+
+model BuyBoxEntry {
+  id               String       @id @default(uuid())
+  dealer_id        String
+  dealer           Dealer       @relation(fields: [dealer_id], references: [id], onDelete: Cascade)
+  make             String
+  model            String
+  year_min         Int
+  year_max         Int
+  generation_label String
+  updated_at       DateTime     @updatedAt
+  tiers            BuyBoxTier[]
+}
+
+model BuyBoxTier {
+  id          String      @id @default(uuid())
+  entry_id    String
+  entry       BuyBoxEntry @relation(fields: [entry_id], references: [id], onDelete: Cascade)
+  mileage_min Int         @default(0)
+  mileage_max Int
+  max_price   Int
+}
+
+model MagicLinkToken {
+  id         String    @id @default(uuid())
+  dealer_id  String
+  dealer     Dealer    @relation(fields: [dealer_id], references: [id], onDelete: Cascade)
+  token      String    @unique
+  expires_at DateTime
+  used_at    DateTime?
+  created_at DateTime  @default(now())
+}
