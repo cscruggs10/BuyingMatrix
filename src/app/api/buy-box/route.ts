@@ -210,7 +210,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Not authorized" }, { status: 401 });
     }
 
-    const entry = await prisma.$transaction(async (tx: typeof prisma) => {
+    const entry = await prisma.$transaction(async (tx) => {
       await tx.buyBoxTier.deleteMany({ where: { entry_id: id } });
       return tx.buyBoxEntry.update({
         where: { id },
