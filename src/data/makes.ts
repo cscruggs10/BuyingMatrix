@@ -1580,6 +1580,26 @@ export const makes: Make[] = [
         ],
       },
       {
+        id: "200",
+        name: "200",
+        generations: [
+          {
+            yearStart: 2011,
+            yearEnd: 2014,
+            label: "1st Gen JS",
+            notes: "Replaced the Sebring. Available as sedan and convertible. Budget-friendly mid-size. V6 preferred over 4-cylinder. Limited trim most desirable. Convertible holds slight premium.",
+            imagePath: "/models/chrysler-200-2011.jpg",
+          },
+          {
+            yearStart: 2015,
+            yearEnd: 2017,
+            label: "2nd Gen UF",
+            notes: "Completely redesigned on Fiat platform. Much improved interior and driving dynamics. AWD available. 200S and 200C trims most desirable. Short production run — discontinued 2017.",
+            imagePath: "/models/chrysler-200-2015.jpg",
+          },
+        ],
+      },
+      {
         id: "town-country-pacifica",
         name: "Town & Country / Pacifica",
         generations: [
