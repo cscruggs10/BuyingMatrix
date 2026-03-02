@@ -504,21 +504,22 @@ export default function BuilderPage() {
                 </h2>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {selectedModel.generations.map((gen) => {
-                  const imgSrc = gen.imagePath.replace(".jpg", ".svg");
-                  return (
+                {selectedModel.generations.map((gen) => (
                     <button
                       key={gen.label}
                       onClick={() => selectGeneration(gen)}
                       className="bg-white rounded-xl shadow-md hover:shadow-lg hover:border-orange-400 border-2 border-transparent transition-all cursor-pointer overflow-hidden text-left"
                     >
                       <div className="relative w-full aspect-[16/10] bg-gray-100">
-                        <Image
-                          src={imgSrc}
+                        <img
+                          src={gen.imagePath}
                           alt={`${selectedModel.name} ${gen.label}`}
-                          fill
-                          className="object-cover"
-                          unoptimized
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            const fallback = gen.imagePath.replace(".jpg", ".svg");
+                            if (target.src !== fallback) target.src = fallback;
+                          }}
                         />
                       </div>
                       <div className="p-4">
@@ -536,8 +537,7 @@ export default function BuilderPage() {
                         </p>
                       </div>
                     </button>
-                  );
-                })}
+                  ))}
               </div>
             </div>
           )}

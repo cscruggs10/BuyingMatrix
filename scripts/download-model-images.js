@@ -1,8 +1,10 @@
 /**
  * Vehicle Buy Box Builder — Model Image Downloader
- * Downloads generation images from Wikimedia Commons into /public/models/
- * Run with PLACEHOLDER_MODE=true for instant SVG placeholders (Step 05)
- * Run normally for real Wikimedia photos (Step 15)
+ * Downloads car images from Wikipedia article primary images.
+ *
+ * Usage:
+ *   PLACEHOLDER_MODE=true node scripts/download-model-images.js   (SVG placeholders)
+ *   node scripts/download-model-images.js                          (real photos)
  */
 
 const fs = require('fs');
@@ -68,365 +70,454 @@ function makePlaceholderLogoSVG(makeId, makeName) {
 </svg>`;
 }
 
-const IMAGE_MAP = {
-  'chevrolet/impala/2006':      'File:2011_Chevrolet_Impala_LT,_Front_Left,_08-15-2021.jpg',
-  'chevrolet/impala/2014':      'File:2016_Chevrolet_Impala_2LT,_Front_Left,_09-01-2021.jpg',
-  'chevrolet/malibu/2008':      'File:2010_Chevrolet_Malibu_LT,_Front_Left,_08-05-2021.jpg',
-  'chevrolet/malibu/2013':      'File:2014_Chevrolet_Malibu_1LT,_Front_Left,_08-18-2021.jpg',
-  'chevrolet/malibu/2016':      'File:2017_Chevrolet_Malibu_LT,_Front_Left,_05-21-2022.jpg',
-  'chevrolet/silverado-1500/2007': 'File:2012_Chevrolet_Silverado_1500_LT,_Front_Left,_08-06-2021.jpg',
-  'chevrolet/silverado-1500/2014': 'File:2017_Chevrolet_Silverado_1500_LT,_Front_Left,_08-21-2021.jpg',
-  'chevrolet/silverado-1500/2019': 'File:2019_Chevrolet_Silverado_1500_LT,_Front_Left,_07-11-2021.jpg',
-  'chevrolet/equinox/2010':     'File:2016_Chevrolet_Equinox_LT,_Front_Left,_07-18-2021.jpg',
-  'chevrolet/equinox/2018':     'File:2020_Chevrolet_Equinox_LT,_Front_Left,_07-04-2021.jpg',
-  'chevrolet/traverse/2009':    'File:2011_Chevrolet_Traverse_LT,_Front_Left,_08-29-2021.jpg',
-  'chevrolet/traverse/2018':    'File:2019_Chevrolet_Traverse_LT,_Front_Left,_08-01-2021.jpg',
-  'chevrolet/cruze/2011':       'File:2013_Chevrolet_Cruze_1LT,_Front_Left,_08-07-2021.jpg',
-  'chevrolet/cruze/2016':       'File:2017_Chevrolet_Cruze_LT,_Front_Left,_08-01-2021.jpg',
-  'chevrolet/tahoe/2007':       'File:2013_Chevrolet_Tahoe_LT,_Front_Left,_08-14-2021.jpg',
-  'chevrolet/tahoe/2015':       'File:2019_Chevrolet_Tahoe_LT,_Front_Left,_07-31-2021.jpg',
-  'chevrolet/tahoe/2021':       'File:2021_Chevrolet_Tahoe_LT,_Front_Left,_06-26-2021.jpg',
-  'ford/f-150/2009':            'File:2014_Ford_F-150_XLT,_Front_Left,_08-17-2021.jpg',
-  'ford/f-150/2015':            'File:2018_Ford_F-150_XLT,_Front_Left,_07-06-2021.jpg',
-  'ford/f-150/2021':            'File:2021_Ford_F-150_XLT,_Front_Left,_07-17-2021.jpg',
-  'ford/fusion/2010':           'File:2012_Ford_Fusion_SEL,_Front_Left,_08-19-2021.jpg',
-  'ford/fusion/2013':           'File:2017_Ford_Fusion_SE,_Front_Left,_08-01-2021.jpg',
-  'ford/explorer/2011':         'File:2016_Ford_Explorer_XLT,_Front_Left,_08-10-2021.jpg',
-  'ford/explorer/2020':         'File:2021_Ford_Explorer_XLT,_Front_Left,_07-10-2021.jpg',
-  'ford/escape/2008':           'File:2011_Ford_Escape_XLT,_Front_Left,_08-29-2021.jpg',
-  'ford/escape/2013':           'File:2017_Ford_Escape_SE,_Front_Left,_08-01-2021.jpg',
-  'ford/escape/2020':           'File:2021_Ford_Escape_SE,_Front_Left,_07-31-2021.jpg',
-  'ford/mustang/2005':          'File:2014_Ford_Mustang_GT,_Front_Left,_08-17-2021.jpg',
-  'ford/mustang/2015':          'File:2018_Ford_Mustang_GT,_Front_Left,_07-28-2021.jpg',
-  'ford/edge/2007':             'File:2013_Ford_Edge_SEL,_Front_Left,_08-18-2021.jpg',
-  'ford/edge/2015':             'File:2019_Ford_Edge_SEL,_Front_Left,_08-22-2021.jpg',
-  'ford/focus/2008':            'File:2010_Ford_Focus_SE,_Front_Left,_08-05-2021.jpg',
-  'ford/focus/2012':            'File:2015_Ford_Focus_SE,_Front_Left,_08-14-2021.jpg',
-  'toyota/camry/2007':          'File:2011_Toyota_Camry_LE,_Front_Left,_08-07-2021.jpg',
-  'toyota/camry/2012':          'File:2016_Toyota_Camry_SE,_Front_Left,_08-14-2021.jpg',
-  'toyota/camry/2018':          'File:2019_Toyota_Camry_SE,_Front_Left,_07-27-2021.jpg',
-  'toyota/corolla/2009':        'File:2012_Toyota_Corolla_LE,_Front_Left,_08-18-2021.jpg',
-  'toyota/corolla/2014':        'File:2017_Toyota_Corolla_SE,_Front_Left,_08-01-2021.jpg',
-  'toyota/corolla/2020':        'File:2021_Toyota_Corolla_SE,_Front_Left,_07-10-2021.jpg',
-  'toyota/highlander/2008':     'File:2012_Toyota_Highlander_Limited,_Front_Left,_08-22-2021.jpg',
-  'toyota/highlander/2014':     'File:2018_Toyota_Highlander_XLE,_Front_Left,_07-25-2021.jpg',
-  'toyota/highlander/2020':     'File:2021_Toyota_Highlander_XLE,_Front_Left,_07-10-2021.jpg',
-  'toyota/rav4/2006':           'File:2011_Toyota_RAV4_Base,_Front_Left,_08-14-2021.jpg',
-  'toyota/rav4/2013':           'File:2017_Toyota_RAV4_XLE,_Front_Left,_08-01-2021.jpg',
-  'toyota/rav4/2019':           'File:2021_Toyota_RAV4_XLE,_Front_Left,_07-10-2021.jpg',
-  'toyota/tacoma/2005':         'File:2013_Toyota_Tacoma_SR5,_Front_Left,_08-21-2021.jpg',
-  'toyota/tacoma/2016':         'File:2019_Toyota_Tacoma_SR5,_Front_Left,_07-25-2021.jpg',
-  'toyota/sienna/2004':         'File:2009_Toyota_Sienna_XLE,_Front_Left,_08-29-2021.jpg',
-  'toyota/sienna/2011':         'File:2018_Toyota_Sienna_XLE,_Front_Left,_08-07-2021.jpg',
-  'toyota/sienna/2021':         'File:2021_Toyota_Sienna_XLE,_Front_Left,_07-10-2021.jpg',
-  'honda/accord/2008':          'File:2011_Honda_Accord_EX-L,_Front_Left,_08-14-2021.jpg',
-  'honda/accord/2013':          'File:2016_Honda_Accord_EX-L,_Front_Left,_08-14-2021.jpg',
-  'honda/accord/2018':          'File:2020_Honda_Accord_Sport,_Front_Left,_07-11-2021.jpg',
-  'honda/civic/2006':           'File:2010_Honda_Civic_EX,_Front_Left,_08-14-2021.jpg',
-  'honda/civic/2012':           'File:2014_Honda_Civic_EX,_Front_Left,_08-18-2021.jpg',
-  'honda/civic/2016':           'File:2019_Honda_Civic_EX,_Front_Left,_07-27-2021.jpg',
-  'honda/civic/2022':           'File:2022_Honda_Civic_Sport,_Front_Left,_09-11-2021.jpg',
-  'honda/cr-v/2007':            'File:2011_Honda_CR-V_EX-L,_Front_Left,_08-29-2021.jpg',
-  'honda/cr-v/2012':            'File:2015_Honda_CR-V_EX-L,_Front_Left,_08-14-2021.jpg',
-  'honda/cr-v/2017':            'File:2020_Honda_CR-V_EX-L,_Front_Left,_07-11-2021.jpg',
-  'honda/pilot/2009':           'File:2013_Honda_Pilot_EX-L,_Front_Left,_08-22-2021.jpg',
-  'honda/pilot/2016':           'File:2020_Honda_Pilot_EX-L,_Front_Left,_07-18-2021.jpg',
-  'honda/odyssey/2005':         'File:2009_Honda_Odyssey_EX-L,_Front_Left,_08-29-2021.jpg',
-  'honda/odyssey/2011':         'File:2016_Honda_Odyssey_EX-L,_Front_Left,_08-21-2021.jpg',
-  'honda/odyssey/2018':         'File:2020_Honda_Odyssey_EX-L,_Front_Left,_07-10-2021.jpg',
-  'dodge/charger/2011':         'File:2013_Dodge_Charger_SXT,_Front_Left,_08-18-2021.jpg',
-  'dodge/charger/2015':         'File:2019_Dodge_Charger_SXT,_Front_Left,_07-25-2021.jpg',
-  'dodge/challenger/2008':      'File:2012_Dodge_Challenger_SXT,_Front_Left,_08-22-2021.jpg',
-  'dodge/challenger/2015':      'File:2018_Dodge_Challenger_R-T,_Front_Left,_08-05-2021.jpg',
-  'dodge/durango/2011':         'File:2012_Dodge_Durango_SXT,_Front_Left,_08-29-2021.jpg',
-  'dodge/durango/2014':         'File:2019_Dodge_Durango_SXT,_Front_Left,_07-31-2021.jpg',
-  'dodge/durango/2021':         'File:2021_Dodge_Durango_GT,_Front_Left,_07-17-2021.jpg',
-  'dodge/grand-caravan/2008':   'File:2010_Dodge_Grand_Caravan_SE,_Front_Left,_08-29-2021.jpg',
-  'dodge/grand-caravan/2011':   'File:2019_Dodge_Grand_Caravan_SE,_Front_Left,_07-25-2021.jpg',
-  'ram/ram-1500/2009':          'File:2012_Ram_1500_SLT,_Front_Left,_08-18-2021.jpg',
-  'ram/ram-1500/2013':          'File:2017_Ram_1500_SLT,_Front_Left,_08-01-2021.jpg',
-  'ram/ram-1500/2019':          'File:2021_Ram_1500_Big_Horn,_Front_Left,_07-10-2021.jpg',
-  'ram/ram-2500/2010':          'File:2013_Ram_2500_SLT,_Front_Left,_08-22-2021.jpg',
-  'ram/ram-2500/2014':          'File:2018_Ram_2500_SLT,_Front_Left,_08-07-2021.jpg',
-  'ram/ram-2500/2019':          'File:2021_Ram_2500_Big_Horn,_Front_Left,_07-17-2021.jpg',
-  'ram/promaster-city/2015':    'File:2019_Ram_ProMaster_City_Tradesman,_Front_Left,_08-01-2021.jpg',
-  'nissan/altima/2007':         'File:2011_Nissan_Altima_2.5_S,_Front_Left,_08-14-2021.jpg',
-  'nissan/altima/2013':         'File:2017_Nissan_Altima_2.5_S,_Front_Left,_08-01-2021.jpg',
-  'nissan/altima/2019':         'File:2020_Nissan_Altima_SR,_Front_Left,_07-11-2021.jpg',
-  'nissan/sentra/2013':         'File:2017_Nissan_Sentra_SV,_Front_Left,_08-01-2021.jpg',
-  'nissan/sentra/2020':         'File:2021_Nissan_Sentra_SV,_Front_Left,_07-10-2021.jpg',
-  'nissan/maxima/2009':         'File:2012_Nissan_Maxima_SV,_Front_Left,_08-18-2021.jpg',
-  'nissan/maxima/2016':         'File:2020_Nissan_Maxima_SV,_Front_Left,_07-18-2021.jpg',
-  'nissan/rogue/2008':          'File:2012_Nissan_Rogue_SV,_Front_Left,_08-18-2021.jpg',
-  'nissan/rogue/2014':          'File:2019_Nissan_Rogue_SV,_Front_Left,_07-31-2021.jpg',
-  'nissan/rogue/2021':          'File:2021_Nissan_Rogue_SV,_Front_Left,_07-10-2021.jpg',
-  'nissan/murano/2009':         'File:2013_Nissan_Murano_SV,_Front_Left,_08-22-2021.jpg',
-  'nissan/murano/2015':         'File:2019_Nissan_Murano_SV,_Front_Left,_07-31-2021.jpg',
-  'nissan/pathfinder/2005':     'File:2011_Nissan_Pathfinder_SE,_Front_Left,_08-29-2021.jpg',
-  'nissan/pathfinder/2013':     'File:2018_Nissan_Pathfinder_SV,_Front_Left,_08-07-2021.jpg',
-  'nissan/pathfinder/2021':     'File:2022_Nissan_Pathfinder_SV,_Front_Left,_09-26-2021.jpg',
-  'kia/optima-k5/2011':         'File:2014_Kia_Optima_EX,_Front_Left,_08-18-2021.jpg',
-  'kia/optima-k5/2016':         'File:2019_Kia_Optima_EX,_Front_Left,_07-27-2021.jpg',
-  'kia/optima-k5/2021':         'File:2021_Kia_K5_GT-Line,_Front_Left,_07-10-2021.jpg',
-  'kia/sorento/2011':           'File:2014_Kia_Sorento_EX,_Front_Left,_08-18-2021.jpg',
-  'kia/sorento/2016':           'File:2019_Kia_Sorento_EX,_Front_Left,_07-27-2021.jpg',
-  'kia/sorento/2021':           'File:2022_Kia_Sorento_EX,_Front_Left,_09-26-2021.jpg',
-  'kia/sportage/2011':          'File:2014_Kia_Sportage_EX,_Front_Left,_08-18-2021.jpg',
-  'kia/sportage/2017':          'File:2020_Kia_Sportage_EX,_Front_Left,_07-18-2021.jpg',
-  'kia/sportage/2022':          'File:2022_Kia_Sportage_EX,_Front_Left,_09-26-2021.jpg',
-  'kia/soul/2010':              'File:2013_Kia_Soul,_Front_Left,_08-22-2021.jpg',
-  'kia/soul/2014':              'File:2018_Kia_Soul_Plus,_Front_Left,_08-05-2021.jpg',
-  'kia/soul/2020':              'File:2021_Kia_Soul_GT-Line,_Front_Left,_07-10-2021.jpg',
-  'kia/forte/2010':             'File:2013_Kia_Forte_EX,_Front_Left,_08-22-2021.jpg',
-  'kia/forte/2014':             'File:2017_Kia_Forte_LX,_Front_Left,_08-01-2021.jpg',
-  'kia/forte/2019':             'File:2021_Kia_Forte_FE,_Front_Left,_07-10-2021.jpg',
-  'hyundai/sonata/2011':        'File:2013_Hyundai_Sonata_GLS,_Front_Left,_08-22-2021.jpg',
-  'hyundai/sonata/2015':        'File:2018_Hyundai_Sonata_SEL,_Front_Left,_08-07-2021.jpg',
-  'hyundai/sonata/2020':        'File:2021_Hyundai_Sonata_SEL,_Front_Left,_07-10-2021.jpg',
-  'hyundai/elantra/2007':       'File:2010_Hyundai_Elantra_GLS,_Front_Left,_08-29-2021.jpg',
-  'hyundai/elantra/2011':       'File:2015_Hyundai_Elantra_SE,_Front_Left,_08-14-2021.jpg',
-  'hyundai/elantra/2017':       'File:2019_Hyundai_Elantra_SEL,_Front_Left,_07-27-2021.jpg',
-  'hyundai/elantra/2021':       'File:2021_Hyundai_Elantra_SEL,_Front_Left,_07-10-2021.jpg',
-  'hyundai/santa-fe/2007':      'File:2011_Hyundai_Santa_Fe_GLS,_Front_Left,_08-29-2021.jpg',
-  'hyundai/santa-fe/2013':      'File:2017_Hyundai_Santa_Fe_SE,_Front_Left,_08-01-2021.jpg',
-  'hyundai/santa-fe/2019':      'File:2021_Hyundai_Santa_Fe_SEL,_Front_Left,_07-10-2021.jpg',
-  'hyundai/tucson/2010':        'File:2014_Hyundai_Tucson_GLS,_Front_Left,_08-18-2021.jpg',
-  'hyundai/tucson/2016':        'File:2019_Hyundai_Tucson_SEL,_Front_Left,_07-27-2021.jpg',
-  'hyundai/tucson/2021':        'File:2022_Hyundai_Tucson_SEL,_Front_Left,_09-26-2021.jpg',
-  'jeep/grand-cherokee/2005':   'File:2009_Jeep_Grand_Cherokee_Laredo,_Front_Left,_08-29-2021.jpg',
-  'jeep/grand-cherokee/2011':   'File:2019_Jeep_Grand_Cherokee_Laredo,_Front_Left,_07-31-2021.jpg',
-  'jeep/grand-cherokee/2022':   'File:2022_Jeep_Grand_Cherokee_Laredo,_Front_Left,_09-26-2021.jpg',
-  'jeep/cherokee/2014':         'File:2017_Jeep_Cherokee_Latitude,_Front_Left,_08-01-2021.jpg',
-  'jeep/cherokee/2019':         'File:2021_Jeep_Cherokee_Latitude,_Front_Left,_07-10-2021.jpg',
-  'jeep/wrangler/2007':         'File:2015_Jeep_Wrangler_Unlimited_Sport,_Front_Left,_08-14-2021.jpg',
-  'jeep/wrangler/2018':         'File:2021_Jeep_Wrangler_Unlimited_Sport,_Front_Left,_07-10-2021.jpg',
-  'jeep/compass/2007':          'File:2013_Jeep_Compass_Sport,_Front_Left,_08-22-2021.jpg',
-  'jeep/compass/2017':          'File:2020_Jeep_Compass_Latitude,_Front_Left,_07-18-2021.jpg',
-  'gmc/sierra-1500/2007':       'File:2012_GMC_Sierra_1500_SLE,_Front_Left,_08-18-2021.jpg',
-  'gmc/sierra-1500/2014':       'File:2017_GMC_Sierra_1500_SLE,_Front_Left,_08-01-2021.jpg',
-  'gmc/sierra-1500/2019':       'File:2021_GMC_Sierra_1500_SLE,_Front_Left,_07-10-2021.jpg',
-  'gmc/terrain/2010':           'File:2014_GMC_Terrain_SLE,_Front_Left,_08-18-2021.jpg',
-  'gmc/terrain/2018':           'File:2020_GMC_Terrain_SLE,_Front_Left,_07-18-2021.jpg',
-  'gmc/acadia/2007':            'File:2012_GMC_Acadia_SLE,_Front_Left,_08-18-2021.jpg',
-  'gmc/acadia/2017':            'File:2020_GMC_Acadia_SLE,_Front_Left,_07-18-2021.jpg',
-  'gmc/yukon/2007':             'File:2013_GMC_Yukon_SLE,_Front_Left,_08-22-2021.jpg',
-  'gmc/yukon/2015':             'File:2019_GMC_Yukon_SLE,_Front_Left,_07-31-2021.jpg',
-  'gmc/yukon/2021':             'File:2021_GMC_Yukon_SLE,_Front_Left,_07-10-2021.jpg',
-  'buick/lacrosse/2010':        'File:2014_Buick_LaCrosse_Leather,_Front_Left,_08-18-2021.jpg',
-  'buick/lacrosse/2017':        'File:2019_Buick_LaCrosse_Preferred,_Front_Left,_07-31-2021.jpg',
-  'buick/enclave/2008':         'File:2015_Buick_Enclave_Leather,_Front_Left,_08-14-2021.jpg',
-  'buick/enclave/2018':         'File:2021_Buick_Enclave_Essence,_Front_Left,_07-10-2021.jpg',
-  'buick/verano/2012':          'File:2015_Buick_Verano_Leather,_Front_Left,_08-14-2021.jpg',
-  'buick/regal/2011':           'File:2016_Buick_Regal_GS,_Front_Left,_08-14-2021.jpg',
-  'buick/regal/2018':           'File:2019_Buick_Regal_Sportback_Essence,_Front_Left,_07-27-2021.jpg',
-  'chrysler/300/2005':          'File:2009_Chrysler_300_Limited,_Front_Left,_08-29-2021.jpg',
-  'chrysler/300/2011':          'File:2014_Chrysler_300S,_Front_Left,_08-18-2021.jpg',
-  'chrysler/300/2015':          'File:2019_Chrysler_300_Limited,_Front_Left,_07-31-2021.jpg',
-  'chrysler/town-country-pacifica/2008': 'File:2014_Chrysler_Town_and_Country_Touring,_Front_Left,_08-18-2021.jpg',
-  'chrysler/town-country-pacifica/2017': 'File:2020_Chrysler_Pacifica_Touring,_Front_Left,_07-11-2021.jpg',
-  'subaru/outback/2010':        'File:2013_Subaru_Outback_2.5i,_Front_Left,_08-22-2021.jpg',
-  'subaru/outback/2015':        'File:2018_Subaru_Outback_2.5i,_Front_Left,_08-07-2021.jpg',
-  'subaru/outback/2020':        'File:2021_Subaru_Outback_Premium,_Front_Left,_07-10-2021.jpg',
-  'subaru/forester/2009':       'File:2012_Subaru_Forester_2.5X,_Front_Left,_08-18-2021.jpg',
-  'subaru/forester/2014':       'File:2018_Subaru_Forester_2.5i,_Front_Left,_08-07-2021.jpg',
-  'subaru/forester/2019':       'File:2021_Subaru_Forester_Premium,_Front_Left,_07-10-2021.jpg',
-  'subaru/legacy/2010':         'File:2013_Subaru_Legacy_2.5i,_Front_Left,_08-22-2021.jpg',
-  'subaru/legacy/2015':         'File:2019_Subaru_Legacy_2.5i,_Front_Left,_07-27-2021.jpg',
-  'subaru/legacy/2020':         'File:2021_Subaru_Legacy_Premium,_Front_Left,_07-10-2021.jpg',
-  'subaru/crosstrek/2013':      'File:2016_Subaru_Crosstrek_Premium,_Front_Left,_08-14-2021.jpg',
-  'subaru/crosstrek/2018':      'File:2021_Subaru_Crosstrek_Premium,_Front_Left,_07-10-2021.jpg',
-  'bmw/3-series/2006':          'File:2010_BMW_328i_(E90),_Front_Left,_08-29-2021.jpg',
-  'bmw/3-series/2012':          'File:2016_BMW_328i_(F30),_Front_Left,_08-14-2021.jpg',
-  'bmw/3-series/2019':          'File:2020_BMW_330i_(G20),_Front_Left,_07-11-2021.jpg',
-  'bmw/5-series/2010':          'File:2014_BMW_528i_(F10),_Front_Left,_08-18-2021.jpg',
-  'bmw/5-series/2017':          'File:2020_BMW_530i_(G30),_Front_Left,_07-18-2021.jpg',
-  'bmw/x3/2011':                'File:2016_BMW_X3_xDrive28i,_Front_Left,_08-14-2021.jpg',
-  'bmw/x3/2018':                'File:2021_BMW_X3_xDrive30i,_Front_Left,_07-10-2021.jpg',
-  'bmw/x5/2007':                'File:2012_BMW_X5_xDrive35i,_Front_Left,_08-18-2021.jpg',
-  'bmw/x5/2014':                'File:2018_BMW_X5_xDrive35i,_Front_Left,_08-07-2021.jpg',
-  'bmw/x5/2019':                'File:2021_BMW_X5_xDrive40i,_Front_Left,_07-10-2021.jpg',
-  'mercedes-benz/c-class/2008': 'File:2012_Mercedes-Benz_C300,_Front_Left,_08-18-2021.jpg',
-  'mercedes-benz/c-class/2015': 'File:2019_Mercedes-Benz_C300,_Front_Left,_07-27-2021.jpg',
-  'mercedes-benz/c-class/2022': 'File:2022_Mercedes-Benz_C300,_Front_Left,_09-26-2021.jpg',
-  'mercedes-benz/e-class/2010': 'File:2014_Mercedes-Benz_E350,_Front_Left,_08-18-2021.jpg',
-  'mercedes-benz/e-class/2017': 'File:2020_Mercedes-Benz_E350,_Front_Left,_07-18-2021.jpg',
-  'mercedes-benz/gle/2012':     'File:2014_Mercedes-Benz_ML350,_Front_Left,_08-18-2021.jpg',
-  'mercedes-benz/gle/2016':     'File:2019_Mercedes-Benz_GLE350,_Front_Left,_07-27-2021.jpg',
-  'mercedes-benz/gle/2020':     'File:2021_Mercedes-Benz_GLE350,_Front_Left,_07-10-2021.jpg',
-  'mercedes-benz/glc/2016':     'File:2019_Mercedes-Benz_GLC300,_Front_Left,_07-27-2021.jpg',
-  'mercedes-benz/glc/2023':     'File:2023_Mercedes-Benz_GLC300,_Front_Left,_10-02-2022.jpg',
-  'acura/tl-tlx/2004':          'File:2007_Acura_TL,_Front_Left,_08-29-2021.jpg',
-  'acura/tl-tlx/2009':          'File:2012_Acura_TL,_Front_Left,_08-18-2021.jpg',
-  'acura/tl-tlx/2015':          'File:2019_Acura_TLX_V6,_Front_Left,_07-27-2021.jpg',
-  'acura/tl-tlx/2021':          'File:2021_Acura_TLX,_Front_Left,_07-10-2021.jpg',
-  'acura/mdx/2007':             'File:2011_Acura_MDX,_Front_Left,_08-14-2021.jpg',
-  'acura/mdx/2014':             'File:2018_Acura_MDX,_Front_Left,_08-07-2021.jpg',
-  'acura/mdx/2022':             'File:2022_Acura_MDX_Technology,_Front_Left,_09-26-2021.jpg',
-  'acura/rdx/2013':             'File:2017_Acura_RDX,_Front_Left,_08-01-2021.jpg',
-  'acura/rdx/2019':             'File:2021_Acura_RDX,_Front_Left,_07-10-2021.jpg',
-  'acura/tsx-ilx/2009':         'File:2013_Acura_TSX,_Front_Left,_08-22-2021.jpg',
-  'acura/tsx-ilx/2013':         'File:2019_Acura_ILX,_Front_Left,_07-27-2021.jpg',
-  'lexus/es/2007':              'File:2011_Lexus_ES_350,_Front_Left,_08-14-2021.jpg',
-  'lexus/es/2013':              'File:2017_Lexus_ES_350,_Front_Left,_08-01-2021.jpg',
-  'lexus/es/2019':              'File:2021_Lexus_ES_350,_Front_Left,_07-10-2021.jpg',
-  'lexus/rx/2010':              'File:2013_Lexus_RX_350,_Front_Left,_08-22-2021.jpg',
-  'lexus/rx/2016':              'File:2019_Lexus_RX_350,_Front_Left,_07-27-2021.jpg',
-  'lexus/rx/2023':              'File:2023_Lexus_RX_350,_Front_Left,_10-02-2022.jpg',
-  'lexus/is/2006':              'File:2010_Lexus_IS_250,_Front_Left,_08-29-2021.jpg',
-  'lexus/is/2014':              'File:2019_Lexus_IS_300,_Front_Left,_07-27-2021.jpg',
-  'lexus/is/2021':              'File:2022_Lexus_IS_350,_Front_Left,_09-26-2021.jpg',
-  'lexus/gx/2010':              'File:2012_Lexus_GX_460,_Front_Left,_08-18-2021.jpg',
-  'lexus/gx/2014':              'File:2019_Lexus_GX_460,_Front_Left,_07-31-2021.jpg',
-  'lexus/nx/2015':              'File:2018_Lexus_NX_300,_Front_Left,_08-07-2021.jpg',
-  'lexus/nx/2022':              'File:2022_Lexus_NX_350,_Front_Left,_09-26-2021.jpg',
-  'infiniti/g35-g37-q50/2007':  'File:2010_Infiniti_G37_Sedan,_Front_Left,_08-29-2021.jpg',
-  'infiniti/g35-g37-q50/2009':  'File:2012_Infiniti_G37_Sedan,_Front_Left,_08-18-2021.jpg',
-  'infiniti/g35-g37-q50/2014':  'File:2018_Infiniti_Q50_3.0t,_Front_Left,_08-07-2021.jpg',
-  'infiniti/g35-g37-q50/2018':  'File:2021_Infiniti_Q50_3.0t,_Front_Left,_07-10-2021.jpg',
-  'infiniti/qx60/2013':         'File:2018_Infiniti_QX60,_Front_Left,_08-07-2021.jpg',
-  'infiniti/qx60/2022':         'File:2022_Infiniti_QX60_Luxe,_Front_Left,_09-26-2021.jpg',
-  'infiniti/qx80/2013':         'File:2017_Infiniti_QX80,_Front_Left,_08-01-2021.jpg',
-  'infiniti/qx80/2017':         'File:2021_Infiniti_QX80,_Front_Left,_07-10-2021.jpg',
-  'infiniti/fx35-qx70/2009':    'File:2012_Infiniti_FX35,_Front_Left,_08-18-2021.jpg',
-  'infiniti/fx35-qx70/2014':    'File:2017_Infiniti_QX70,_Front_Left,_08-01-2021.jpg',
-  'cadillac/cts/2008':          'File:2012_Cadillac_CTS,_Front_Left,_08-18-2021.jpg',
-  'cadillac/cts/2014':          'File:2018_Cadillac_CTS,_Front_Left,_08-07-2021.jpg',
-  'cadillac/ats/2013':          'File:2017_Cadillac_ATS,_Front_Left,_08-01-2021.jpg',
-  'cadillac/escalade/2007':     'File:2013_Cadillac_Escalade_ESV,_Front_Left,_08-22-2021.jpg',
-  'cadillac/escalade/2015':     'File:2019_Cadillac_Escalade_ESV,_Front_Left,_07-31-2021.jpg',
-  'cadillac/escalade/2021':     'File:2021_Cadillac_Escalade,_Front_Left,_07-10-2021.jpg',
-  'cadillac/srx-xt5/2010':      'File:2015_Cadillac_SRX,_Front_Left,_08-14-2021.jpg',
-  'cadillac/srx-xt5/2017':      'File:2021_Cadillac_XT5,_Front_Left,_07-10-2021.jpg',
-  'cadillac/xts/2013':          'File:2017_Cadillac_XTS,_Front_Left,_08-01-2021.jpg',
-  'lincoln/mkz/2013':           'File:2016_Lincoln_MKZ,_Front_Left,_08-14-2021.jpg',
-  'lincoln/mkz/2017':           'File:2019_Lincoln_MKZ,_Front_Left,_07-27-2021.jpg',
-  'lincoln/mkx-nautilus/2011':  'File:2015_Lincoln_MKX,_Front_Left,_08-14-2021.jpg',
-  'lincoln/mkx-nautilus/2016':  'File:2018_Lincoln_MKX,_Front_Left,_08-07-2021.jpg',
-  'lincoln/mkx-nautilus/2019':  'File:2021_Lincoln_Nautilus,_Front_Left,_07-10-2021.jpg',
-  'lincoln/navigator/2007':     'File:2012_Lincoln_Navigator,_Front_Left,_08-18-2021.jpg',
-  'lincoln/navigator/2015':     'File:2017_Lincoln_Navigator,_Front_Left,_08-01-2021.jpg',
-  'lincoln/navigator/2018':     'File:2021_Lincoln_Navigator,_Front_Left,_07-10-2021.jpg',
-  'lincoln/continental/2017':   'File:2019_Lincoln_Continental,_Front_Left,_07-27-2021.jpg',
-  'lincoln/mkt/2010':           'File:2017_Lincoln_MKT,_Front_Left,_08-01-2021.jpg',
-  'mazda/mazda3/2010':          'File:2013_Mazda3_i_Touring,_Front_Left,_08-22-2021.jpg',
-  'mazda/mazda3/2014':          'File:2018_Mazda3_i_Grand_Touring,_Front_Left,_08-07-2021.jpg',
-  'mazda/mazda3/2019':          'File:2021_Mazda3_Select,_Front_Left,_07-10-2021.jpg',
-  'mazda/mazda6/2014':          'File:2017_Mazda6_Grand_Touring,_Front_Left,_08-01-2021.jpg',
-  'mazda/mazda6/2018':          'File:2021_Mazda6_Grand_Touring,_Front_Left,_07-10-2021.jpg',
-  'mazda/cx-5/2013':            'File:2016_Mazda_CX-5_Grand_Touring,_Front_Left,_08-14-2021.jpg',
-  'mazda/cx-5/2017':            'File:2021_Mazda_CX-5_Grand_Touring,_Front_Left,_07-10-2021.jpg',
-  'mazda/cx-5/2023':            'File:2023_Mazda_CX-5_Carbon_Turbo,_Front_Left,_10-02-2022.jpg',
-  'mazda/cx-9/2016':            'File:2020_Mazda_CX-9_Grand_Touring,_Front_Left,_07-11-2021.jpg',
-  'mazda/mx-5-miata/2006':      'File:2013_Mazda_MX-5_Miata_Club,_Front_Left,_08-22-2021.jpg',
-  'mazda/mx-5-miata/2016':      'File:2019_Mazda_MX-5_Miata_Grand_Touring,_Front_Left,_07-27-2021.jpg',
-  'volkswagen/jetta/2011':      'File:2014_Volkswagen_Jetta_SE,_Front_Left,_08-18-2021.jpg',
-  'volkswagen/jetta/2019':      'File:2021_Volkswagen_Jetta_SE,_Front_Left,_07-10-2021.jpg',
-  'volkswagen/passat/2012':     'File:2016_Volkswagen_Passat_SE,_Front_Left,_08-14-2021.jpg',
-  'volkswagen/passat/2020':     'File:2021_Volkswagen_Passat_SE,_Front_Left,_07-10-2021.jpg',
-  'volkswagen/tiguan/2009':     'File:2015_Volkswagen_Tiguan_SE,_Front_Left,_08-14-2021.jpg',
-  'volkswagen/tiguan/2018':     'File:2021_Volkswagen_Tiguan_SE,_Front_Left,_07-10-2021.jpg',
-  'volkswagen/atlas/2018':      'File:2020_Volkswagen_Atlas_SE,_Front_Left,_07-11-2021.jpg',
-  'volkswagen/atlas/2024':      'File:2024_Volkswagen_Atlas_SE,_Front_Left,_10-01-2023.jpg',
-  'volkswagen/gti/2010':        'File:2013_Volkswagen_GTI,_Front_Left,_08-22-2021.jpg',
-  'volkswagen/gti/2015':        'File:2019_Volkswagen_GTI_SE,_Front_Left,_07-27-2021.jpg',
-  'volkswagen/gti/2022':        'File:2022_Volkswagen_GTI_SE,_Front_Left,_09-26-2021.jpg',
-  'audi/a4/2009':               'File:2014_Audi_A4_Premium,_Front_Left,_08-18-2021.jpg',
-  'audi/a4/2017':               'File:2020_Audi_A4_Premium,_Front_Left,_07-11-2021.jpg',
-  'audi/a6/2012':               'File:2016_Audi_A6_Premium_Plus,_Front_Left,_08-14-2021.jpg',
-  'audi/a6/2019':               'File:2021_Audi_A6_Premium,_Front_Left,_07-10-2021.jpg',
-  'audi/q5/2009':               'File:2015_Audi_Q5_Premium_Plus,_Front_Left,_08-14-2021.jpg',
-  'audi/q5/2018':               'File:2021_Audi_Q5_Premium,_Front_Left,_07-10-2021.jpg',
-  'audi/q7/2007':               'File:2014_Audi_Q7_Premium,_Front_Left,_08-18-2021.jpg',
-  'audi/q7/2017':               'File:2021_Audi_Q7_Premium,_Front_Left,_07-10-2021.jpg',
-  'audi/a3/2015':               'File:2018_Audi_A3_Premium,_Front_Left,_08-07-2021.jpg',
-  'audi/a3/2022':               'File:2022_Audi_A3_Premium,_Front_Left,_09-26-2021.jpg',
-  'mitsubishi/outlander/2014':  'File:2018_Mitsubishi_Outlander_SE,_Front_Left,_08-07-2021.jpg',
-  'mitsubishi/outlander/2022':  'File:2022_Mitsubishi_Outlander_SE,_Front_Left,_09-26-2021.jpg',
-  'mitsubishi/eclipse-cross/2018': 'File:2020_Mitsubishi_Eclipse_Cross_LE,_Front_Left,_07-11-2021.jpg',
-  'mitsubishi/eclipse-cross/2022': 'File:2022_Mitsubishi_Eclipse_Cross_LE,_Front_Left,_09-26-2021.jpg',
-  'mitsubishi/galant/2004':     'File:2011_Mitsubishi_Galant_ES,_Front_Left,_08-29-2021.jpg',
-  'mitsubishi/lancer/2008':     'File:2014_Mitsubishi_Lancer_ES,_Front_Left,_08-18-2021.jpg',
-  'volvo/xc90/2003':            'File:2013_Volvo_XC90,_Front_Left,_08-22-2021.jpg',
-  'volvo/xc90/2016':            'File:2020_Volvo_XC90_T6,_Front_Left,_07-11-2021.jpg',
-  'volvo/xc60/2010':            'File:2016_Volvo_XC60_T5,_Front_Left,_08-14-2021.jpg',
-  'volvo/xc60/2018':            'File:2021_Volvo_XC60_T5,_Front_Left,_07-10-2021.jpg',
-  'volvo/s60/2011':             'File:2016_Volvo_S60_T5,_Front_Left,_08-14-2021.jpg',
-  'volvo/s60/2019':             'File:2021_Volvo_S60_T5,_Front_Left,_07-10-2021.jpg',
-  'volvo/v60/2015':             'File:2018_Volvo_V60_T5,_Front_Left,_08-07-2021.jpg',
-  'volvo/v60/2019':             'File:2021_Volvo_V60_T5,_Front_Left,_07-10-2021.jpg',
-  'volvo/xc40/2019':            'File:2021_Volvo_XC40_T5,_Front_Left,_07-10-2021.jpg',
-  'land-rover/range-rover-sport/2010': 'File:2013_Land_Rover_Range_Rover_Sport_HSE,_Front_Left,_08-22-2021.jpg',
-  'land-rover/range-rover-sport/2014': 'File:2018_Land_Rover_Range_Rover_Sport_HSE,_Front_Left,_08-07-2021.jpg',
-  'land-rover/range-rover-sport/2018': 'File:2021_Land_Rover_Range_Rover_Sport_HSE,_Front_Left,_07-10-2021.jpg',
-  'land-rover/discovery-lr4/2010':     'File:2013_Land_Rover_LR4,_Front_Left,_08-22-2021.jpg',
-  'land-rover/discovery-lr4/2017':     'File:2020_Land_Rover_Discovery_HSE,_Front_Left,_07-11-2021.jpg',
-  'land-rover/defender/2020':          'File:2021_Land_Rover_Defender_110_S,_Front_Left,_07-10-2021.jpg',
+// Wikipedia search queries per model — maps to Wikipedia article titles
+// Format: 'make/model/yearStart' -> ['search query 1', 'search query 2', ...]
+// The script tries each query in order until it finds an article with an image.
+const WIKI_SEARCH = {
+  // Chevrolet
+  'chevrolet/impala/2006': ['Chevrolet Impala ninth generation', 'Chevrolet Impala 2006'],
+  'chevrolet/impala/2014': ['Chevrolet Impala tenth generation', 'Chevrolet Impala 2014'],
+  'chevrolet/malibu/2008': ['Chevrolet Malibu seventh generation', 'Chevrolet Malibu 2008'],
+  'chevrolet/malibu/2013': ['Chevrolet Malibu eighth generation', 'Chevrolet Malibu 2013'],
+  'chevrolet/malibu/2016': ['Chevrolet Malibu ninth generation', 'Chevrolet Malibu 2016'],
+  'chevrolet/silverado-1500/2007': ['Chevrolet Silverado second generation', 'Chevrolet Silverado 2007'],
+  'chevrolet/silverado-1500/2014': ['Chevrolet Silverado third generation', 'Chevrolet Silverado 2014'],
+  'chevrolet/silverado-1500/2019': ['Chevrolet Silverado fourth generation', 'Chevrolet Silverado 2019'],
+  'chevrolet/equinox/2010': ['Chevrolet Equinox second generation', 'Chevrolet Equinox 2010'],
+  'chevrolet/equinox/2018': ['Chevrolet Equinox third generation', 'Chevrolet Equinox 2018'],
+  'chevrolet/traverse/2009': ['Chevrolet Traverse first generation', 'Chevrolet Traverse 2009'],
+  'chevrolet/traverse/2018': ['Chevrolet Traverse second generation', 'Chevrolet Traverse 2018'],
+  'chevrolet/cruze/2011': ['Chevrolet Cruze first generation', 'Chevrolet Cruze 2011'],
+  'chevrolet/cruze/2016': ['Chevrolet Cruze second generation', 'Chevrolet Cruze 2016'],
+  'chevrolet/tahoe/2007': ['Chevrolet Tahoe third generation GMT900', 'Chevrolet Tahoe 2007'],
+  'chevrolet/tahoe/2015': ['Chevrolet Tahoe fourth generation', 'Chevrolet Tahoe 2015'],
+  'chevrolet/tahoe/2021': ['Chevrolet Tahoe fifth generation', 'Chevrolet Tahoe 2021'],
+  // Ford
+  'ford/f-150/2009': ['Ford F-Series twelfth generation', 'Ford F-150 2009'],
+  'ford/f-150/2015': ['Ford F-Series thirteenth generation', 'Ford F-150 2015'],
+  'ford/f-150/2021': ['Ford F-Series fourteenth generation', 'Ford F-150 2021'],
+  'ford/fusion/2010': ['Ford Fusion first generation Americas', 'Ford Fusion 2010'],
+  'ford/fusion/2013': ['Ford Fusion second generation Americas', 'Ford Fusion 2013'],
+  'ford/explorer/2011': ['Ford Explorer fifth generation', 'Ford Explorer 2011'],
+  'ford/explorer/2020': ['Ford Explorer sixth generation', 'Ford Explorer 2020'],
+  'ford/escape/2008': ['Ford Escape second generation', 'Ford Escape 2008'],
+  'ford/escape/2013': ['Ford Escape third generation', 'Ford Escape 2013'],
+  'ford/escape/2020': ['Ford Escape fourth generation', 'Ford Escape 2020'],
+  'ford/mustang/2005': ['Ford Mustang fifth generation', 'Ford Mustang 2005'],
+  'ford/mustang/2015': ['Ford Mustang sixth generation', 'Ford Mustang 2015'],
+  'ford/edge/2007': ['Ford Edge first generation', 'Ford Edge 2007'],
+  'ford/edge/2015': ['Ford Edge second generation', 'Ford Edge 2015'],
+  'ford/focus/2008': ['Ford Focus second generation North America', 'Ford Focus 2008'],
+  'ford/focus/2012': ['Ford Focus third generation', 'Ford Focus 2012'],
+  // Toyota
+  'toyota/camry/2007': ['Toyota Camry XV40', 'Toyota Camry 2007'],
+  'toyota/camry/2012': ['Toyota Camry XV50', 'Toyota Camry 2012'],
+  'toyota/camry/2018': ['Toyota Camry XV70', 'Toyota Camry 2018'],
+  'toyota/corolla/2009': ['Toyota Corolla E140', 'Toyota Corolla 2009'],
+  'toyota/corolla/2014': ['Toyota Corolla E170', 'Toyota Corolla 2014'],
+  'toyota/corolla/2020': ['Toyota Corolla E210', 'Toyota Corolla 2020'],
+  'toyota/highlander/2008': ['Toyota Highlander XU40', 'Toyota Highlander 2008'],
+  'toyota/highlander/2014': ['Toyota Highlander XU50', 'Toyota Highlander 2014'],
+  'toyota/highlander/2020': ['Toyota Highlander XU70', 'Toyota Highlander 2020'],
+  'toyota/rav4/2006': ['Toyota RAV4 third generation XA30', 'Toyota RAV4 2006'],
+  'toyota/rav4/2013': ['Toyota RAV4 fourth generation XA40', 'Toyota RAV4 2013'],
+  'toyota/rav4/2019': ['Toyota RAV4 fifth generation XA50', 'Toyota RAV4 2019'],
+  'toyota/tacoma/2005': ['Toyota Tacoma second generation', 'Toyota Tacoma 2005'],
+  'toyota/tacoma/2016': ['Toyota Tacoma third generation', 'Toyota Tacoma 2016'],
+  'toyota/sienna/2004': ['Toyota Sienna second generation', 'Toyota Sienna 2004'],
+  'toyota/sienna/2011': ['Toyota Sienna third generation', 'Toyota Sienna 2011'],
+  'toyota/sienna/2021': ['Toyota Sienna fourth generation', 'Toyota Sienna 2021'],
+  // Honda
+  'honda/accord/2008': ['Honda Accord eighth generation', 'Honda Accord 2008'],
+  'honda/accord/2013': ['Honda Accord ninth generation', 'Honda Accord 2013'],
+  'honda/accord/2018': ['Honda Accord tenth generation', 'Honda Accord 2018'],
+  'honda/civic/2006': ['Honda Civic eighth generation', 'Honda Civic 2006'],
+  'honda/civic/2012': ['Honda Civic ninth generation', 'Honda Civic 2012'],
+  'honda/civic/2016': ['Honda Civic tenth generation', 'Honda Civic 2016'],
+  'honda/civic/2022': ['Honda Civic eleventh generation', 'Honda Civic 2022'],
+  'honda/cr-v/2007': ['Honda CR-V third generation', 'Honda CR-V 2007'],
+  'honda/cr-v/2012': ['Honda CR-V fourth generation', 'Honda CR-V 2012'],
+  'honda/cr-v/2017': ['Honda CR-V fifth generation', 'Honda CR-V 2017'],
+  'honda/pilot/2009': ['Honda Pilot second generation', 'Honda Pilot 2009'],
+  'honda/pilot/2016': ['Honda Pilot third generation', 'Honda Pilot 2016'],
+  'honda/odyssey/2005': ['Honda Odyssey third generation North America', 'Honda Odyssey 2005'],
+  'honda/odyssey/2011': ['Honda Odyssey fourth generation', 'Honda Odyssey 2011'],
+  'honda/odyssey/2018': ['Honda Odyssey fifth generation', 'Honda Odyssey 2018'],
+  // Dodge
+  'dodge/charger/2011': ['Dodge Charger seventh generation', 'Dodge Charger LX 2011'],
+  'dodge/charger/2015': ['Dodge Charger seventh generation', 'Dodge Charger LD 2015'],
+  'dodge/challenger/2008': ['Dodge Challenger third generation', 'Dodge Challenger 2008'],
+  'dodge/challenger/2015': ['Dodge Challenger third generation', 'Dodge Challenger 2015'],
+  'dodge/durango/2011': ['Dodge Durango third generation', 'Dodge Durango 2011'],
+  'dodge/durango/2014': ['Dodge Durango third generation', 'Dodge Durango 2014'],
+  'dodge/durango/2021': ['Dodge Durango third generation', 'Dodge Durango 2021'],
+  'dodge/grand-caravan/2008': ['Dodge Grand Caravan fifth generation', 'Dodge Caravan 2008'],
+  'dodge/grand-caravan/2011': ['Dodge Grand Caravan fifth generation', 'Dodge Caravan 2011'],
+  // Ram
+  'ram/ram-1500/2009': ['Ram pickup fourth generation', 'Dodge Ram 1500 2009'],
+  'ram/ram-1500/2013': ['Ram pickup fourth generation', 'Ram 1500 2013'],
+  'ram/ram-1500/2019': ['Ram pickup fifth generation', 'Ram 1500 2019'],
+  'ram/ram-2500/2010': ['Ram 2500 fourth generation', 'Ram 2500 2010'],
+  'ram/ram-2500/2014': ['Ram 2500 fourth generation', 'Ram 2500 2014'],
+  'ram/ram-2500/2019': ['Ram 2500 fifth generation', 'Ram 2500 2019'],
+  'ram/promaster-city/2015': ['Ram ProMaster City', 'Ram ProMaster City 2015'],
+  // Nissan
+  'nissan/altima/2007': ['Nissan Altima fourth generation L32', 'Nissan Altima 2007'],
+  'nissan/altima/2013': ['Nissan Altima fifth generation L33', 'Nissan Altima 2013'],
+  'nissan/altima/2019': ['Nissan Altima sixth generation L34', 'Nissan Altima 2019'],
+  'nissan/sentra/2013': ['Nissan Sentra seventh generation B17', 'Nissan Sentra 2013'],
+  'nissan/sentra/2020': ['Nissan Sentra eighth generation B18', 'Nissan Sentra 2020'],
+  'nissan/maxima/2009': ['Nissan Maxima seventh generation A35', 'Nissan Maxima 2009'],
+  'nissan/maxima/2016': ['Nissan Maxima eighth generation A36', 'Nissan Maxima 2016'],
+  'nissan/rogue/2008': ['Nissan Rogue first generation S35', 'Nissan Rogue 2008'],
+  'nissan/rogue/2014': ['Nissan Rogue second generation T32', 'Nissan Rogue 2014'],
+  'nissan/rogue/2021': ['Nissan Rogue third generation T33', 'Nissan Rogue 2021'],
+  'nissan/murano/2009': ['Nissan Murano second generation Z51', 'Nissan Murano 2009'],
+  'nissan/murano/2015': ['Nissan Murano third generation Z52', 'Nissan Murano 2015'],
+  'nissan/pathfinder/2005': ['Nissan Pathfinder third generation R51', 'Nissan Pathfinder 2005'],
+  'nissan/pathfinder/2013': ['Nissan Pathfinder fourth generation R52', 'Nissan Pathfinder 2013'],
+  'nissan/pathfinder/2021': ['Nissan Pathfinder fifth generation R53', 'Nissan Pathfinder 2021'],
+  // Kia
+  'kia/optima-k5/2011': ['Kia Optima third generation TF', 'Kia Optima 2011'],
+  'kia/optima-k5/2016': ['Kia Optima fourth generation JF', 'Kia Optima 2016'],
+  'kia/optima-k5/2021': ['Kia K5 first generation DL3', 'Kia K5 2021'],
+  'kia/sorento/2011': ['Kia Sorento second generation XM', 'Kia Sorento 2011'],
+  'kia/sorento/2016': ['Kia Sorento third generation UM', 'Kia Sorento 2016'],
+  'kia/sorento/2021': ['Kia Sorento fourth generation MQ4', 'Kia Sorento 2021'],
+  'kia/sportage/2011': ['Kia Sportage third generation SL', 'Kia Sportage 2011'],
+  'kia/sportage/2017': ['Kia Sportage fourth generation QL', 'Kia Sportage 2017'],
+  'kia/sportage/2022': ['Kia Sportage fifth generation NQ5', 'Kia Sportage 2022'],
+  'kia/soul/2010': ['Kia Soul first generation AM', 'Kia Soul 2010'],
+  'kia/soul/2014': ['Kia Soul second generation PS', 'Kia Soul 2014'],
+  'kia/soul/2020': ['Kia Soul third generation SK3', 'Kia Soul 2020'],
+  'kia/forte/2010': ['Kia Forte first generation TD', 'Kia Forte 2010'],
+  'kia/forte/2014': ['Kia Forte second generation YD', 'Kia Forte 2014'],
+  'kia/forte/2019': ['Kia Forte third generation BD', 'Kia Forte 2019'],
+  // Hyundai
+  'hyundai/sonata/2011': ['Hyundai Sonata sixth generation YF', 'Hyundai Sonata 2011'],
+  'hyundai/sonata/2015': ['Hyundai Sonata seventh generation LF', 'Hyundai Sonata 2015'],
+  'hyundai/sonata/2020': ['Hyundai Sonata eighth generation DN8', 'Hyundai Sonata 2020'],
+  'hyundai/elantra/2007': ['Hyundai Elantra fourth generation HD', 'Hyundai Elantra 2007'],
+  'hyundai/elantra/2011': ['Hyundai Elantra fifth generation MD', 'Hyundai Elantra 2011'],
+  'hyundai/elantra/2017': ['Hyundai Elantra sixth generation AD', 'Hyundai Elantra 2017'],
+  'hyundai/elantra/2021': ['Hyundai Elantra seventh generation CN7', 'Hyundai Elantra 2021'],
+  'hyundai/santa-fe/2007': ['Hyundai Santa Fe second generation CM', 'Hyundai Santa Fe 2007'],
+  'hyundai/santa-fe/2013': ['Hyundai Santa Fe third generation DM', 'Hyundai Santa Fe 2013'],
+  'hyundai/santa-fe/2019': ['Hyundai Santa Fe fourth generation TM', 'Hyundai Santa Fe 2019'],
+  'hyundai/tucson/2010': ['Hyundai Tucson second generation LM', 'Hyundai Tucson 2010'],
+  'hyundai/tucson/2016': ['Hyundai Tucson third generation TL', 'Hyundai Tucson 2016'],
+  'hyundai/tucson/2021': ['Hyundai Tucson fourth generation NX4', 'Hyundai Tucson 2021'],
+  // Jeep
+  'jeep/grand-cherokee/2005': ['Jeep Grand Cherokee WK', 'Jeep Grand Cherokee 2005'],
+  'jeep/grand-cherokee/2011': ['Jeep Grand Cherokee WK2', 'Jeep Grand Cherokee 2011'],
+  'jeep/grand-cherokee/2022': ['Jeep Grand Cherokee WL', 'Jeep Grand Cherokee 2022'],
+  'jeep/cherokee/2014': ['Jeep Cherokee KL', 'Jeep Cherokee 2014'],
+  'jeep/cherokee/2019': ['Jeep Cherokee KL', 'Jeep Cherokee 2019'],
+  'jeep/wrangler/2007': ['Jeep Wrangler JK', 'Jeep Wrangler 2007'],
+  'jeep/wrangler/2018': ['Jeep Wrangler JL', 'Jeep Wrangler 2018'],
+  'jeep/compass/2007': ['Jeep Compass MK49', 'Jeep Compass 2007'],
+  'jeep/compass/2017': ['Jeep Compass MP', 'Jeep Compass 2017'],
+  // GMC
+  'gmc/sierra-1500/2007': ['GMC Sierra second generation', 'GMC Sierra 2007'],
+  'gmc/sierra-1500/2014': ['GMC Sierra third generation', 'GMC Sierra 2014'],
+  'gmc/sierra-1500/2019': ['GMC Sierra fourth generation', 'GMC Sierra 2019'],
+  'gmc/terrain/2010': ['GMC Terrain first generation', 'GMC Terrain 2010'],
+  'gmc/terrain/2018': ['GMC Terrain second generation', 'GMC Terrain 2018'],
+  'gmc/acadia/2007': ['GMC Acadia first generation', 'GMC Acadia 2007'],
+  'gmc/acadia/2017': ['GMC Acadia second generation', 'GMC Acadia 2017'],
+  'gmc/yukon/2007': ['GMC Yukon third generation GMT900', 'GMC Yukon 2007'],
+  'gmc/yukon/2015': ['GMC Yukon fourth generation', 'GMC Yukon 2015'],
+  'gmc/yukon/2021': ['GMC Yukon fifth generation', 'GMC Yukon 2021'],
+  // Buick
+  'buick/lacrosse/2010': ['Buick LaCrosse second generation', 'Buick LaCrosse 2010'],
+  'buick/lacrosse/2017': ['Buick LaCrosse third generation', 'Buick LaCrosse 2017'],
+  'buick/enclave/2008': ['Buick Enclave first generation', 'Buick Enclave 2008'],
+  'buick/enclave/2018': ['Buick Enclave second generation', 'Buick Enclave 2018'],
+  'buick/verano/2012': ['Buick Verano', 'Buick Verano 2012'],
+  'buick/regal/2011': ['Buick Regal fifth generation', 'Buick Regal 2011'],
+  'buick/regal/2018': ['Buick Regal sixth generation', 'Buick Regal 2018'],
+  // Chrysler
+  'chrysler/300/2005': ['Chrysler 300 first generation LX', 'Chrysler 300 2005'],
+  'chrysler/300/2011': ['Chrysler 300 second generation', 'Chrysler 300 2011'],
+  'chrysler/300/2015': ['Chrysler 300 second generation', 'Chrysler 300 2015'],
+  'chrysler/town-country-pacifica/2008': ['Chrysler Town and Country fifth generation', 'Chrysler Town Country 2008'],
+  'chrysler/town-country-pacifica/2017': ['Chrysler Pacifica minivan', 'Chrysler Pacifica 2017'],
+  // Subaru
+  'subaru/outback/2010': ['Subaru Outback fourth generation', 'Subaru Outback 2010'],
+  'subaru/outback/2015': ['Subaru Outback fifth generation', 'Subaru Outback 2015'],
+  'subaru/outback/2020': ['Subaru Outback sixth generation', 'Subaru Outback 2020'],
+  'subaru/forester/2009': ['Subaru Forester third generation SH', 'Subaru Forester 2009'],
+  'subaru/forester/2014': ['Subaru Forester fourth generation SJ', 'Subaru Forester 2014'],
+  'subaru/forester/2019': ['Subaru Forester fifth generation SK', 'Subaru Forester 2019'],
+  'subaru/legacy/2010': ['Subaru Legacy fifth generation', 'Subaru Legacy 2010'],
+  'subaru/legacy/2015': ['Subaru Legacy sixth generation', 'Subaru Legacy 2015'],
+  'subaru/legacy/2020': ['Subaru Legacy seventh generation', 'Subaru Legacy 2020'],
+  'subaru/crosstrek/2013': ['Subaru Crosstrek first generation', 'Subaru XV Crosstrek 2013'],
+  'subaru/crosstrek/2018': ['Subaru Crosstrek second generation', 'Subaru Crosstrek 2018'],
+  // BMW
+  'bmw/3-series/2006': ['BMW 3 Series E90', 'BMW E90 3 Series'],
+  'bmw/3-series/2012': ['BMW 3 Series F30', 'BMW F30 3 Series'],
+  'bmw/3-series/2019': ['BMW 3 Series G20', 'BMW G20 3 Series'],
+  'bmw/5-series/2010': ['BMW 5 Series F10', 'BMW F10 5 Series'],
+  'bmw/5-series/2017': ['BMW 5 Series G30', 'BMW G30 5 Series'],
+  'bmw/x3/2011': ['BMW X3 F25', 'BMW X3 second generation'],
+  'bmw/x3/2018': ['BMW X3 G01', 'BMW X3 third generation'],
+  'bmw/x5/2007': ['BMW X5 E70', 'BMW X5 second generation'],
+  'bmw/x5/2014': ['BMW X5 F15', 'BMW X5 third generation'],
+  'bmw/x5/2019': ['BMW X5 G05', 'BMW X5 fourth generation'],
+  // Mercedes-Benz
+  'mercedes-benz/c-class/2008': ['Mercedes-Benz C-Class W204', 'Mercedes-Benz W204'],
+  'mercedes-benz/c-class/2015': ['Mercedes-Benz C-Class W205', 'Mercedes-Benz W205'],
+  'mercedes-benz/c-class/2022': ['Mercedes-Benz C-Class W206', 'Mercedes-Benz W206'],
+  'mercedes-benz/e-class/2010': ['Mercedes-Benz E-Class W212', 'Mercedes-Benz W212'],
+  'mercedes-benz/e-class/2017': ['Mercedes-Benz E-Class W213', 'Mercedes-Benz W213'],
+  'mercedes-benz/gle/2012': ['Mercedes-Benz M-Class W166', 'Mercedes-Benz ML W166'],
+  'mercedes-benz/gle/2016': ['Mercedes-Benz GLE-Class W166', 'Mercedes-Benz GLE 2016'],
+  'mercedes-benz/gle/2020': ['Mercedes-Benz GLE-Class V167', 'Mercedes-Benz GLE V167'],
+  'mercedes-benz/glc/2016': ['Mercedes-Benz GLC-Class X253', 'Mercedes-Benz GLC 2016'],
+  'mercedes-benz/glc/2023': ['Mercedes-Benz GLC-Class X254', 'Mercedes-Benz GLC 2023'],
+  // Acura
+  'acura/tl-tlx/2004': ['Acura TL third generation', 'Acura TL 2004'],
+  'acura/tl-tlx/2009': ['Acura TL fourth generation', 'Acura TL 2009'],
+  'acura/tl-tlx/2015': ['Acura TLX first generation', 'Acura TLX 2015'],
+  'acura/tl-tlx/2021': ['Acura TLX second generation', 'Acura TLX 2021'],
+  'acura/mdx/2007': ['Acura MDX second generation', 'Acura MDX 2007'],
+  'acura/mdx/2014': ['Acura MDX third generation', 'Acura MDX 2014'],
+  'acura/mdx/2022': ['Acura MDX fourth generation', 'Acura MDX 2022'],
+  'acura/rdx/2013': ['Acura RDX second generation', 'Acura RDX 2013'],
+  'acura/rdx/2019': ['Acura RDX third generation', 'Acura RDX 2019'],
+  'acura/tsx-ilx/2009': ['Acura TSX second generation', 'Acura TSX 2009'],
+  'acura/tsx-ilx/2013': ['Acura ILX first generation', 'Acura ILX 2013'],
+  // Lexus
+  'lexus/es/2007': ['Lexus ES XV40', 'Lexus ES 350 2007'],
+  'lexus/es/2013': ['Lexus ES XV60', 'Lexus ES 350 2013'],
+  'lexus/es/2019': ['Lexus ES seventh generation', 'Lexus ES 350 2019'],
+  'lexus/rx/2010': ['Lexus RX AL10', 'Lexus RX 350 2010'],
+  'lexus/rx/2016': ['Lexus RX AL20', 'Lexus RX 350 2016'],
+  'lexus/rx/2023': ['Lexus RX fifth generation', 'Lexus RX 2023'],
+  'lexus/is/2006': ['Lexus IS XE20', 'Lexus IS 250 2006'],
+  'lexus/is/2014': ['Lexus IS XE30', 'Lexus IS 300 2014'],
+  'lexus/is/2021': ['Lexus IS XE30 facelift', 'Lexus IS 350 2021'],
+  'lexus/gx/2010': ['Lexus GX J150', 'Lexus GX 460 2010'],
+  'lexus/gx/2014': ['Lexus GX J150', 'Lexus GX 460 2014'],
+  'lexus/nx/2015': ['Lexus NX AZ10', 'Lexus NX 2015'],
+  'lexus/nx/2022': ['Lexus NX AZ20', 'Lexus NX 2022'],
+  // Infiniti
+  'infiniti/g35-g37-q50/2007': ['Infiniti G37', 'Infiniti G35 2007'],
+  'infiniti/g35-g37-q50/2009': ['Infiniti G37 sedan', 'Infiniti G37 2009'],
+  'infiniti/g35-g37-q50/2014': ['Infiniti Q50 first generation', 'Infiniti Q50 2014'],
+  'infiniti/g35-g37-q50/2018': ['Infiniti Q50 first generation', 'Infiniti Q50 2018'],
+  'infiniti/qx60/2013': ['Infiniti QX60 first generation', 'Infiniti QX60 2013'],
+  'infiniti/qx60/2022': ['Infiniti QX60 second generation', 'Infiniti QX60 2022'],
+  'infiniti/qx80/2013': ['Infiniti QX80 first generation', 'Infiniti QX80 2013'],
+  'infiniti/qx80/2017': ['Infiniti QX80 first generation', 'Infiniti QX80 2017'],
+  'infiniti/fx35-qx70/2009': ['Infiniti FX second generation', 'Infiniti FX35 2009'],
+  'infiniti/fx35-qx70/2014': ['Infiniti QX70', 'Infiniti QX70 2014'],
+  // Cadillac
+  'cadillac/cts/2008': ['Cadillac CTS second generation', 'Cadillac CTS 2008'],
+  'cadillac/cts/2014': ['Cadillac CTS third generation', 'Cadillac CTS 2014'],
+  'cadillac/ats/2013': ['Cadillac ATS', 'Cadillac ATS 2013'],
+  'cadillac/escalade/2007': ['Cadillac Escalade third generation', 'Cadillac Escalade 2007'],
+  'cadillac/escalade/2015': ['Cadillac Escalade fourth generation', 'Cadillac Escalade 2015'],
+  'cadillac/escalade/2021': ['Cadillac Escalade fifth generation', 'Cadillac Escalade 2021'],
+  'cadillac/srx-xt5/2010': ['Cadillac SRX second generation', 'Cadillac SRX 2010'],
+  'cadillac/srx-xt5/2017': ['Cadillac XT5 first generation', 'Cadillac XT5 2017'],
+  'cadillac/xts/2013': ['Cadillac XTS', 'Cadillac XTS 2013'],
+  // Lincoln
+  'lincoln/mkz/2013': ['Lincoln MKZ second generation', 'Lincoln MKZ 2013'],
+  'lincoln/mkz/2017': ['Lincoln MKZ second generation', 'Lincoln MKZ 2017'],
+  'lincoln/mkx-nautilus/2011': ['Lincoln MKX first generation', 'Lincoln MKX 2011'],
+  'lincoln/mkx-nautilus/2016': ['Lincoln MKX second generation', 'Lincoln MKX 2016'],
+  'lincoln/mkx-nautilus/2019': ['Lincoln Nautilus', 'Lincoln Nautilus 2019'],
+  'lincoln/navigator/2007': ['Lincoln Navigator third generation', 'Lincoln Navigator 2007'],
+  'lincoln/navigator/2015': ['Lincoln Navigator third generation', 'Lincoln Navigator 2015'],
+  'lincoln/navigator/2018': ['Lincoln Navigator fourth generation', 'Lincoln Navigator 2018'],
+  'lincoln/continental/2017': ['Lincoln Continental tenth generation', 'Lincoln Continental 2017'],
+  'lincoln/mkt/2010': ['Lincoln MKT', 'Lincoln MKT 2010'],
+  // Mazda
+  'mazda/mazda3/2010': ['Mazda3 second generation BL', 'Mazda3 2010'],
+  'mazda/mazda3/2014': ['Mazda3 third generation BM', 'Mazda3 2014'],
+  'mazda/mazda3/2019': ['Mazda3 fourth generation BP', 'Mazda3 2019'],
+  'mazda/mazda6/2014': ['Mazda6 third generation GJ', 'Mazda6 2014'],
+  'mazda/mazda6/2018': ['Mazda6 third generation', 'Mazda6 2018'],
+  'mazda/cx-5/2013': ['Mazda CX-5 first generation KE', 'Mazda CX-5 2013'],
+  'mazda/cx-5/2017': ['Mazda CX-5 second generation KF', 'Mazda CX-5 2017'],
+  'mazda/cx-5/2023': ['Mazda CX-5 second generation', 'Mazda CX-5 2023'],
+  'mazda/cx-9/2016': ['Mazda CX-9 second generation', 'Mazda CX-9 2016'],
+  'mazda/mx-5-miata/2006': ['Mazda MX-5 NC', 'Mazda MX-5 2006'],
+  'mazda/mx-5-miata/2016': ['Mazda MX-5 ND', 'Mazda MX-5 2016'],
+  // Volkswagen
+  'volkswagen/jetta/2011': ['Volkswagen Jetta sixth generation', 'Volkswagen Jetta 2011'],
+  'volkswagen/jetta/2019': ['Volkswagen Jetta seventh generation', 'Volkswagen Jetta 2019'],
+  'volkswagen/passat/2012': ['Volkswagen Passat NMS', 'Volkswagen Passat B7 2012'],
+  'volkswagen/passat/2020': ['Volkswagen Passat NMS', 'Volkswagen Passat 2020'],
+  'volkswagen/tiguan/2009': ['Volkswagen Tiguan first generation', 'Volkswagen Tiguan 2009'],
+  'volkswagen/tiguan/2018': ['Volkswagen Tiguan second generation', 'Volkswagen Tiguan 2018'],
+  'volkswagen/atlas/2018': ['Volkswagen Atlas first generation', 'Volkswagen Atlas 2018'],
+  'volkswagen/atlas/2024': ['Volkswagen Atlas second generation', 'Volkswagen Atlas 2024'],
+  'volkswagen/gti/2010': ['Volkswagen Golf Mk6 GTI', 'Volkswagen GTI 2010'],
+  'volkswagen/gti/2015': ['Volkswagen Golf Mk7 GTI', 'Volkswagen GTI 2015'],
+  'volkswagen/gti/2022': ['Volkswagen Golf Mk8 GTI', 'Volkswagen GTI 2022'],
+  // Audi
+  'audi/a4/2009': ['Audi A4 B8', 'Audi A4 2009'],
+  'audi/a4/2017': ['Audi A4 B9', 'Audi A4 2017'],
+  'audi/a6/2012': ['Audi A6 C7', 'Audi A6 2012'],
+  'audi/a6/2019': ['Audi A6 C8', 'Audi A6 2019'],
+  'audi/q5/2009': ['Audi Q5 8R', 'Audi Q5 first generation'],
+  'audi/q5/2018': ['Audi Q5 FY', 'Audi Q5 second generation'],
+  'audi/q7/2007': ['Audi Q7 4L', 'Audi Q7 first generation'],
+  'audi/q7/2017': ['Audi Q7 4M', 'Audi Q7 second generation'],
+  'audi/a3/2015': ['Audi A3 8V', 'Audi A3 third generation'],
+  'audi/a3/2022': ['Audi A3 8Y', 'Audi A3 fourth generation'],
+  // Mitsubishi
+  'mitsubishi/outlander/2014': ['Mitsubishi Outlander third generation', 'Mitsubishi Outlander 2014'],
+  'mitsubishi/outlander/2022': ['Mitsubishi Outlander fourth generation', 'Mitsubishi Outlander 2022'],
+  'mitsubishi/eclipse-cross/2018': ['Mitsubishi Eclipse Cross', 'Mitsubishi Eclipse Cross 2018'],
+  'mitsubishi/eclipse-cross/2022': ['Mitsubishi Eclipse Cross facelift', 'Mitsubishi Eclipse Cross 2022'],
+  'mitsubishi/galant/2004': ['Mitsubishi Galant ninth generation', 'Mitsubishi Galant 2004'],
+  'mitsubishi/lancer/2008': ['Mitsubishi Lancer eighth generation', 'Mitsubishi Lancer 2008'],
+  // Volvo
+  'volvo/xc90/2003': ['Volvo XC90 first generation', 'Volvo XC90 2003'],
+  'volvo/xc90/2016': ['Volvo XC90 second generation', 'Volvo XC90 2016'],
+  'volvo/xc60/2010': ['Volvo XC60 first generation', 'Volvo XC60 2010'],
+  'volvo/xc60/2018': ['Volvo XC60 second generation', 'Volvo XC60 2018'],
+  'volvo/s60/2011': ['Volvo S60 second generation', 'Volvo S60 2011'],
+  'volvo/s60/2019': ['Volvo S60 third generation', 'Volvo S60 2019'],
+  'volvo/v60/2015': ['Volvo V60 first generation', 'Volvo V60 2015'],
+  'volvo/v60/2019': ['Volvo V60 second generation', 'Volvo V60 2019'],
+  'volvo/xc40/2019': ['Volvo XC40', 'Volvo XC40 2019'],
+  // Land Rover
+  'land-rover/range-rover-sport/2010': ['Range Rover Sport L320', 'Range Rover Sport 2010'],
+  'land-rover/range-rover-sport/2014': ['Range Rover Sport L494', 'Range Rover Sport 2014'],
+  'land-rover/range-rover-sport/2018': ['Range Rover Sport L494', 'Range Rover Sport 2018'],
+  'land-rover/discovery-lr4/2010': ['Land Rover Discovery 4', 'Land Rover LR4 2010'],
+  'land-rover/discovery-lr4/2017': ['Land Rover Discovery 5', 'Land Rover Discovery 2017'],
+  'land-rover/defender/2020': ['Land Rover Defender L663', 'Land Rover Defender 2020'],
 };
 
-const LOGO_MAP = {
-  'chevrolet':     'File:Chevrolet_script_logo.svg',
-  'ford':          'File:Ford_Motor_Company_Logo.svg',
-  'toyota':        'File:Toyota_logo_(Red).svg',
-  'honda':         'File:Honda-logo.svg',
-  'dodge':         'File:Dodge_logo.svg',
-  'ram':           'File:Ram-logo.svg',
-  'nissan':        'File:Nissan_2020_logo.svg',
-  'kia':           'File:Kia_logo3.svg',
-  'hyundai':       'File:Hyundai_Motor_Company_logo.svg',
-  'jeep':          'File:Jeep_logo.svg',
-  'gmc':           'File:GMC_logo.svg',
-  'buick':         'File:Buick_logo.svg',
-  'chrysler':      'File:Chrysler_logo.svg',
-  'subaru':        'File:Subaru_logo.svg',
-  'bmw':           'File:BMW_logo_(gray).svg',
-  'mercedes-benz': 'File:Mercedes-Benz_logo.svg',
-  'acura':         'File:Acura_logo.svg',
-  'lexus':         'File:Lexus_division_emblem.svg',
-  'infiniti':      'File:Infiniti_logo.svg',
-  'cadillac':      'File:Cadillac_logo.svg',
-  'lincoln':       'File:Lincoln_Motor_Company_logo.svg',
-  'mazda':         'File:Mazda_logo.svg',
-  'volkswagen':    'File:Volkswagen_logo_2019.svg',
-  'audi':          'File:Audi_logo.svg',
-  'mitsubishi':    'File:Mitsubishi_logo.svg',
-  'volvo':         'File:Volvo_logo.svg',
-  'land-rover':    'File:Land_Rover_logo.svg',
+const LOGO_SEARCH = {
+  'chevrolet':     ['Chevrolet'],
+  'ford':          ['Ford Motor Company'],
+  'toyota':        ['Toyota'],
+  'honda':         ['Honda'],
+  'dodge':         ['Dodge automobile'],
+  'ram':           ['Ram Trucks'],
+  'nissan':        ['Nissan'],
+  'kia':           ['Kia Corporation'],
+  'hyundai':       ['Hyundai Motor Company'],
+  'jeep':          ['Jeep'],
+  'gmc':           ['GMC automobile'],
+  'buick':         ['Buick'],
+  'chrysler':      ['Chrysler'],
+  'subaru':        ['Subaru'],
+  'bmw':           ['BMW'],
+  'mercedes-benz': ['Mercedes-Benz'],
+  'acura':         ['Acura'],
+  'lexus':         ['Lexus'],
+  'infiniti':      ['Infiniti'],
+  'cadillac':      ['Cadillac'],
+  'lincoln':       ['Lincoln Motor Company'],
+  'mazda':         ['Mazda'],
+  'volkswagen':    ['Volkswagen'],
+  'audi':          ['Audi'],
+  'mitsubishi':    ['Mitsubishi Motors'],
+  'volvo':         ['Volvo Cars'],
+  'land-rover':    ['Land Rover'],
 };
 
-async function getWikimediaUrl(filename) {
-  const encoded = encodeURIComponent(filename.replace('File:', ''));
-  const apiUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=File:${encoded}&prop=imageinfo&iiprop=url&format=json&origin=*`;
-  const response = await fetch(apiUrl, { headers: { 'User-Agent': 'BuyBoxBuilder/1.0' } });
+const delay = (ms) => new Promise(r => setTimeout(r, ms));
+
+// Browser-like UA required for Wikimedia image downloads
+const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+/**
+ * Search Wikipedia for an article and return a thumbnail image URL (800px).
+ * Using thumbnails instead of originals avoids 403 errors from Wikimedia.
+ */
+async function searchWikipediaImage(query) {
+  const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrlimit=3&prop=pageimages&piprop=thumbnail&pithumbsize=800&format=json&origin=*`;
+
+  const response = await fetch(searchUrl, { headers: { 'User-Agent': UA } });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json();
-  const pages = data.query.pages;
-  const page = Object.values(pages)[0];
-  if (page.imageinfo && page.imageinfo[0]) return page.imageinfo[0].url;
-  throw new Error(`No image info found for: ${filename}`);
+  if (!data.query || !data.query.pages) throw new Error('No results');
+
+  const pages = Object.values(data.query.pages);
+  for (const page of pages) {
+    if (page.thumbnail && page.thumbnail.source) {
+      const url = page.thumbnail.source;
+      if (url.endsWith('.svg') || url.endsWith('.svg.png') || url.includes('Flag_of') || url.includes('logo') || url.includes('Logo')) continue;
+      return url;
+    }
+  }
+
+  throw new Error('No image found in search results');
+}
+
+/**
+ * Get logo image from Wikipedia article's infobox
+ */
+async function searchWikipediaLogo(query) {
+  const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrlimit=1&prop=images&format=json&origin=*`;
+
+  const response = await fetch(searchUrl, { headers: { 'User-Agent': UA } });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const data = await response.json();
+  if (!data.query || !data.query.pages) throw new Error('No results');
+
+  const pages = Object.values(data.query.pages);
+  for (const page of pages) {
+    if (!page.images) continue;
+    for (const img of page.images) {
+      const title = img.title.toLowerCase();
+      if (title.includes('logo') && (title.endsWith('.svg') || title.endsWith('.png'))) {
+        const fileUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(img.title)}&prop=imageinfo&iiprop=url&iiurlwidth=400&format=json&origin=*`;
+        const fileResp = await fetch(fileUrl, { headers: { 'User-Agent': UA } });
+        const fileData = await fileResp.json();
+        const filePages = Object.values(fileData.query.pages);
+        const info = filePages[0]?.imageinfo?.[0];
+        // Prefer the thumburl (resized version) to avoid 403s
+        if (info?.thumburl) return info.thumburl;
+        if (info?.url) return info.url;
+      }
+    }
+  }
+
+  throw new Error('No logo found');
 }
 
 async function downloadUrl(url, destPath) {
-  const response = await fetch(url, { headers: { 'User-Agent': 'BuyBoxBuilder/1.0' } });
+  const response = await fetch(url, {
+    headers: { 'User-Agent': UA },
+    redirect: 'follow',
+  });
   if (!response.ok) throw new Error(`HTTP ${response.status} for ${url}`);
   const buffer = await response.arrayBuffer();
   fs.writeFileSync(destPath, Buffer.from(buffer));
 }
 
 async function processModels() {
-  console.log(`\nBuy Box Builder — Image ${PLACEHOLDER_MODE ? 'Placeholder Generator' : 'Downloader'}`);
+  console.log(`\nBuy Box Builder — Image ${PLACEHOLDER_MODE ? 'Placeholder Generator' : 'Downloader (Wikipedia)'}`);
   console.log('='.repeat(60));
 
   let success = 0, failed = 0, skipped = 0;
   const failures = [];
+  const entries = Object.entries(WIKI_SEARCH);
 
-  for (const [key] of Object.entries(IMAGE_MAP)) {
+  for (let i = 0; i < entries.length; i++) {
+    const [key, queries] = entries[i];
     const [makeId, modelId, yearStart] = key.split('/');
     const ext = PLACEHOLDER_MODE ? 'svg' : 'jpg';
     const filename = `${makeId}-${modelId}-${yearStart}.${ext}`;
     const destPath = path.join(OUTPUT_DIR, filename);
 
+    // Skip if already exists (and is not a tiny placeholder when we want real images)
     if (fs.existsSync(destPath)) {
-      skipped++;
-      continue;
+      const stats = fs.statSync(destPath);
+      if (PLACEHOLDER_MODE || stats.size > 2000) {
+        skipped++;
+        continue;
+      }
     }
 
     if (PLACEHOLDER_MODE) {
@@ -436,27 +527,38 @@ async function processModels() {
       console.log(`  PLACEHOLDER  ${filename}`);
       success++;
     } else {
-      try {
-        const wikimediaFile = IMAGE_MAP[key];
-        const imageUrl = await getWikimediaUrl(wikimediaFile);
-        await downloadUrl(imageUrl, destPath);
-        console.log(`  DOWNLOADED  ${filename}`);
-        success++;
-        await new Promise(r => setTimeout(r, 300));
-      } catch (err) {
-        console.log(`  FAILED     ${filename} — ${err.message}`);
-        failures.push({ key, filename, error: err.message });
+      let downloaded = false;
+      for (const query of queries) {
+        try {
+          const imageUrl = await searchWikipediaImage(query);
+          await downloadUrl(imageUrl, destPath);
+          const size = fs.statSync(destPath).size;
+          console.log(`  [${i+1}/${entries.length}] DOWNLOADED  ${filename} (${(size/1024).toFixed(0)}KB)`);
+          success++;
+          downloaded = true;
+          await delay(500); // Be respectful to Wikipedia
+          break;
+        } catch (err) {
+          // Try next query
+        }
+      }
+      if (!downloaded) {
+        console.log(`  [${i+1}/${entries.length}] FAILED      ${filename}`);
+        failures.push({ key, filename });
         failed++;
+        await delay(300);
       }
     }
   }
 
   console.log('\n' + '='.repeat(60));
   console.log('Processing Make Logos...');
-  for (const [makeId] of Object.entries(LOGO_MAP)) {
+
+  for (const [makeId, queries] of Object.entries(LOGO_SEARCH)) {
     const filename = `${makeId}.svg`;
     const destPath = path.join(LOGO_DIR, filename);
-    if (fs.existsSync(destPath)) { skipped++; continue; }
+
+    if (fs.existsSync(destPath) && PLACEHOLDER_MODE) { skipped++; continue; }
 
     if (PLACEHOLDER_MODE) {
       const makeName = makeId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -464,16 +566,26 @@ async function processModels() {
       console.log(`  PLACEHOLDER LOGO  ${filename}`);
       success++;
     } else {
-      try {
-        const wikimediaFile = LOGO_MAP[makeId];
-        const imageUrl = await getWikimediaUrl(wikimediaFile);
-        await downloadUrl(imageUrl, destPath);
-        console.log(`  LOGO  ${filename}`);
-        success++;
-        await new Promise(r => setTimeout(r, 300));
-      } catch (err) {
-        console.log(`  LOGO FAILED  ${filename} — ${err.message}`);
-        failures.push({ key: makeId, filename, error: err.message });
+      let downloaded = false;
+      for (const query of queries) {
+        try {
+          const logoUrl = await searchWikipediaLogo(query);
+          const ext = logoUrl.endsWith('.svg') ? 'svg' : 'png';
+          const logoFilename = `${makeId}.${ext}`;
+          const logoPath = path.join(LOGO_DIR, logoFilename);
+          await downloadUrl(logoUrl, logoPath);
+          console.log(`  LOGO  ${logoFilename}`);
+          success++;
+          downloaded = true;
+          await delay(500);
+          break;
+        } catch (err) {
+          // Try next query
+        }
+      }
+      if (!downloaded) {
+        console.log(`  LOGO FAILED  ${filename}`);
+        failures.push({ key: makeId, filename });
         failed++;
       }
     }
@@ -484,7 +596,7 @@ async function processModels() {
 
   if (failures.length > 0) {
     console.log('\nFAILED IMAGES:');
-    failures.forEach(f => console.log(`   ${f.filename}: ${f.error}`));
+    failures.forEach(f => console.log(`   ${f.filename}`));
     fs.writeFileSync('image-download-failures.json', JSON.stringify(failures, null, 2));
   }
 
