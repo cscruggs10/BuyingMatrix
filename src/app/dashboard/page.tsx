@@ -55,11 +55,14 @@ function getGenerationImage(
   return gen?.imagePath || null;
 }
 
+type ViewMode = "cards" | "list";
+
 export default function DashboardPage() {
   const [dealer, setDealer] = useState<Dealer | null>(null);
   const [entries, setEntries] = useState<BuyBoxEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [view, setView] = useState<ViewMode>("cards");
 
   useEffect(() => {
     async function fetchData() {
@@ -166,110 +169,228 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div>
-              <p className="text-sm text-gray-500 mb-4">
-                {entries.length} vehicle{entries.length !== 1 ? "s" : ""} in your buy box
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {entries.map((entry) => {
-                  const logoPath = getLogoPath(entry.make);
-                  const imagePath = getGenerationImage(
-                    entry.make,
-                    entry.model,
-                    entry.generation_label
-                  );
-
-                  return (
-                    <div
-                      key={entry.id}
-                      className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100"
-                    >
-                      {/* Generation Image */}
-                      {imagePath && (
-                        <div className="relative w-full aspect-[16/10] bg-gray-100">
-                          <img
-                            src={imagePath}
-                            alt={`${entry.make} ${entry.model}`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              const fallback = imagePath.replace(".jpg", ".svg");
-                              if (target.src !== fallback) target.src = fallback;
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      <div className="p-5">
-                        {/* Make Logo + Heading */}
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-3">
-                            {logoPath && (
-                              <div className="relative w-8 h-5 shrink-0">
-                                <Image
-                                  src={logoPath}
-                                  alt={entry.make}
-                                  fill
-                                  className="object-contain"
-                                  unoptimized
-                                />
-                              </div>
-                            )}
-                            <h4 className="text-lg font-semibold text-gray-900">
-                              {entry.make} {entry.model}
-                            </h4>
-                          </div>
-                          <div className="flex gap-3 shrink-0">
-                            <Link
-                              href="/builder"
-                              className="text-sm font-medium text-orange-600 hover:text-orange-700"
-                            >
-                              Edit
-                            </Link>
-                            <button
-                              onClick={() => handleDelete(entry.id)}
-                              className="text-sm font-medium text-red-600 hover:text-red-700"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Year Range + Generation */}
-                        <p className="text-sm text-gray-600 mb-4">
-                          {entry.year_min}&ndash;{entry.year_max} &middot;{" "}
-                          {entry.generation_label}
-                        </p>
-
-                        {/* Tier Table */}
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="text-left text-gray-500 border-b">
-                              <th className="pb-2 font-medium">Mileage Range</th>
-                              <th className="pb-2 font-medium">Max Price</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {entry.tiers.map((tier) => (
-                              <tr
-                                key={tier.id}
-                                className="border-b last:border-0"
-                              >
-                                <td className="py-2 text-gray-700">
-                                  {formatMileage(tier.mileage_min)} &ndash;{" "}
-                                  {formatMileage(tier.mileage_max)}
-                                </td>
-                                <td className="py-2 font-medium text-gray-900">
-                                  {formatPrice(tier.max_price)}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm text-gray-500">
+                  {entries.length} vehicle{entries.length !== 1 ? "s" : ""} in your buy box
+                </p>
+                <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => setView("cards")}
+                    className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                      view === "cards"
+                        ? "bg-orange-600 text-white"
+                        : "bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    Cards
+                  </button>
+                  <button
+                    onClick={() => setView("list")}
+                    className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                      view === "list"
+                        ? "bg-orange-600 text-white"
+                        : "bg-white text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    List
+                  </button>
+                </div>
               </div>
+
+              {/* Card View */}
+              {view === "cards" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {entries.map((entry) => {
+                    const logoPath = getLogoPath(entry.make);
+                    const imagePath = getGenerationImage(
+                      entry.make,
+                      entry.model,
+                      entry.generation_label
+                    );
+
+                    return (
+                      <div
+                        key={entry.id}
+                        className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100"
+                      >
+                        {imagePath && (
+                          <div className="relative w-full aspect-[16/10] bg-gray-100">
+                            <img
+                              src={imagePath}
+                              alt={`${entry.make} ${entry.model}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                const fallback = imagePath.replace(".jpg", ".svg");
+                                if (target.src !== fallback) target.src = fallback;
+                              }}
+                            />
+                          </div>
+                        )}
+
+                        <div className="p-5">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-3">
+                              {logoPath && (
+                                <div className="relative w-8 h-5 shrink-0">
+                                  <Image
+                                    src={logoPath}
+                                    alt={entry.make}
+                                    fill
+                                    className="object-contain"
+                                    unoptimized
+                                  />
+                                </div>
+                              )}
+                              <h4 className="text-lg font-semibold text-gray-900">
+                                {entry.make} {entry.model}
+                              </h4>
+                            </div>
+                            <div className="flex gap-3 shrink-0">
+                              <Link
+                                href="/builder"
+                                className="text-sm font-medium text-orange-600 hover:text-orange-700"
+                              >
+                                Edit
+                              </Link>
+                              <button
+                                onClick={() => handleDelete(entry.id)}
+                                className="text-sm font-medium text-red-600 hover:text-red-700"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+
+                          <p className="text-sm text-gray-600 mb-4">
+                            {entry.year_min}&ndash;{entry.year_max} &middot;{" "}
+                            {entry.generation_label}
+                          </p>
+
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="text-left text-gray-500 border-b">
+                                <th className="pb-2 font-medium">Mileage Range</th>
+                                <th className="pb-2 font-medium">Max Price</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {entry.tiers.map((tier) => (
+                                <tr
+                                  key={tier.id}
+                                  className="border-b last:border-0"
+                                >
+                                  <td className="py-2 text-gray-700">
+                                    {formatMileage(tier.mileage_min)} &ndash;{" "}
+                                    {formatMileage(tier.mileage_max)}
+                                  </td>
+                                  <td className="py-2 font-medium text-gray-900">
+                                    {formatPrice(tier.max_price)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* List View */}
+              {view === "list" && (
+                <div className="overflow-x-auto rounded-lg border border-gray-200">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-gray-50 text-left text-gray-500 border-b">
+                        <th className="px-4 py-3 font-medium">Vehicle</th>
+                        <th className="px-4 py-3 font-medium">Years</th>
+                        <th className="px-4 py-3 font-medium">Generation</th>
+                        <th className="px-4 py-3 font-medium">Mileage Range</th>
+                        <th className="px-4 py-3 font-medium">Max Price</th>
+                        <th className="px-4 py-3 font-medium"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {entries.map((entry) => {
+                        const logoPath = getLogoPath(entry.make);
+
+                        return entry.tiers.map((tier, tierIdx) => (
+                          <tr
+                            key={`${entry.id}-${tier.id}`}
+                            className="border-b last:border-0 hover:bg-gray-50"
+                          >
+                            {tierIdx === 0 ? (
+                              <>
+                                <td
+                                  className="px-4 py-3 font-medium text-gray-900"
+                                  rowSpan={entry.tiers.length}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    {logoPath && (
+                                      <div className="relative w-6 h-4 shrink-0">
+                                        <Image
+                                          src={logoPath}
+                                          alt={entry.make}
+                                          fill
+                                          className="object-contain"
+                                          unoptimized
+                                        />
+                                      </div>
+                                    )}
+                                    {entry.make} {entry.model}
+                                  </div>
+                                </td>
+                                <td
+                                  className="px-4 py-3 text-gray-700"
+                                  rowSpan={entry.tiers.length}
+                                >
+                                  {entry.year_min}&ndash;{entry.year_max}
+                                </td>
+                                <td
+                                  className="px-4 py-3 text-gray-700"
+                                  rowSpan={entry.tiers.length}
+                                >
+                                  {entry.generation_label}
+                                </td>
+                              </>
+                            ) : null}
+                            <td className="px-4 py-3 text-gray-700">
+                              {formatMileage(tier.mileage_min)} &ndash;{" "}
+                              {formatMileage(tier.mileage_max)}
+                            </td>
+                            <td className="px-4 py-3 font-medium text-gray-900">
+                              {formatPrice(tier.max_price)}
+                            </td>
+                            {tierIdx === 0 ? (
+                              <td
+                                className="px-4 py-3"
+                                rowSpan={entry.tiers.length}
+                              >
+                                <div className="flex gap-3">
+                                  <Link
+                                    href="/builder"
+                                    className="text-sm font-medium text-orange-600 hover:text-orange-700"
+                                  >
+                                    Edit
+                                  </Link>
+                                  <button
+                                    onClick={() => handleDelete(entry.id)}
+                                    className="text-sm font-medium text-red-600 hover:text-red-700"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </td>
+                            ) : null}
+                          </tr>
+                        ));
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
         </div>
